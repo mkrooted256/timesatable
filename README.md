@@ -73,7 +73,24 @@ TimesheetBuilder:
 
 The whole input setup should be serializable to a human-readable text file 
 that is easy to edit manually if needed.
-The point is to save the file and reuse it for the next week without creating the objects in python. 
+The point is to save the file and reuse it for the next week without creating the objects in python.
+
+## Constraints
+
+### Implicit (always enforced)
+
+- At most one meeting per room at any point in time — rooms cannot be shared.
+- At most one simultaneous meeting per participant — no double-booking.
+- Every meeting must be assigned to a room — open-plan (no room) is not supported.
+- Any room is eligible for any meeting (subject to room availability) — no room-type restrictions.
+- Meetings are confined to a single day — multi-day meetings are not supported.
+- Meeting start times are aligned to `step_minutes` — the scheduling grid.
+
+### Explicitly not supported (yet)
+
+- Soft constraints / preferences — all constraints are hard.
+- Room capacity / equipment requirements.
+
 
 ## Outputs
 

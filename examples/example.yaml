@@ -1,0 +1,43 @@
+settings:
+  step_minutes: 30
+
+days:
+  - name: Monday
+    available:
+      - "09:00-12:00"
+      - "13:00-17:00"
+  - name: Tuesday
+    available:
+      - "09:00-17:00"
+
+rooms:
+  - name: Room A
+    unavailable: []
+  - name: Room B
+    unavailable:
+      - "09:00-10:00"  # maintenance Monday morning
+
+participants:
+  - name: Alice
+    unavailable:
+      - "12:00-13:00"
+  - name: Bob
+    unavailable: []
+  - name: Carol
+    unavailable:
+      - "15:00-17:00"
+
+meetings:
+  - title: Standup
+    duration_minutes: 30
+    participants: [Alice, Bob]
+    unavailable: []
+  - title: Planning
+    duration_minutes: 60
+    participants: [Alice, Bob, Carol]
+    unavailable:
+      - "09:00-10:00"
+  - title: 1:1 Bob-Carol
+    duration_minutes: 30
+    participants: [Bob, Carol]
+    unavailable: []
