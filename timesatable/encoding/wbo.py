@@ -1,6 +1,6 @@
 """WBO (Weighted Boolean Optimization) encoder for TimeSATable.
 
-Produces a .wcnf file consumed by bin/wbo.
+Produces a .cnf or .wcnf file consumed by bin/wbo. (Currently only supports hard constraints, so the .cnf format is used instead of .wcnf.)
 
 Variable numbering:
     Variables are 1-indexed integers.
@@ -195,6 +195,14 @@ class WBOEncoder(Encoder):
             w = top if weight == 0 else weight
             lines.append(f"{w} {' '.join(map(str, lits))} 0")
         return "\n".join(lines) + "\n"
+    
+    def _to_cnf(self) -> str:
+        assert all(weight == 0 for weight, _ in self._clauses), "Cannot convert to CNF: contains soft clauses."
+        lines: list[str] = []
+        lines.append(f"p cnf {self._num_vars} {len(self._clauses)}")
+        for weight, lits in self._clauses:
+            lines.append(f"{' '.join(map(str, lits))} 0")
+        return "\n".join(lines) + "\n"
 
     # ------------------------------------------------------------------
     # Solve
@@ -202,17 +210,18 @@ class WBOEncoder(Encoder):
 
     def solve(self) -> list[PlannedMeeting] | None:
         assert self._schedule is not None, "Call encode() before solve()."
-        wcnf = self._to_wcnf()
+        cnf = self._to_cnf()
+        print(f"Generated {len(self._clauses)} clauses with {self._num_vars} variables.")  # Debug
 
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".wcnf", delete=False, encoding="utf-8"
+            dir=".", mode="w", suffix=".cnf", delete=False, encoding="utf-8", delete_on_close=False
         ) as f:
-            f.write(wcnf)
+            f.write(cnf)
             tmp_path = f.name
 
         try:
             result = subprocess.run(
-                [str(self.wbo_binary), tmp_path],
+                [str(self.wbo_binary), "-file-format=cnf", tmp_path],
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -227,8 +236,10 @@ class WBOEncoder(Encoder):
         assignment: dict[int, bool] = {}
         sat = False
         for line in output.splitlines():
+            # print("WBO> ", line)  # Debug: print WBO output
             if line.startswith("s "):
                 sat = "OPTIMUM FOUND" in line or "SATISFIABLE" in line
+                # print(f"WBO status: {'SAT' if sat else 'UNSAT'}")
             elif line.startswith("v "):
                 for token in line[2:].split():
                     vid = int(token)
